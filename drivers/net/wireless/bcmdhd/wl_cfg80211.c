@@ -1005,14 +1005,13 @@ wl_cfg80211_change_virtual_iface(struct wiphy *wiphy, struct net_device *ndev,
 	default:
 		return -EINVAL;
 	}
-
 	err = wldev_ioctl(ndev, WLC_SET_INFRA, &infra, sizeof(infra), true);
 	if (unlikely(err)) {
 		WL_ERR(("WLC_SET_INFRA error (%d)\n", err));
 		return err;
 	}
 	WL_DBG(("set infra = %d", infra));
-	set_mode_by_netdev(wl, ndev, mode);
+	wl_set_mode_by_netdev(wl, ndev, mode);
 
 	if (ap) {
 		if (wl->p2p_supported && wl->p2p->vif_created) {
@@ -1817,7 +1816,7 @@ wl_cfg80211_join_ibss(struct wiphy *wiphy, struct net_device *dev,
 {
 	struct wl_priv *wl = wiphy_priv(wiphy);
 	struct wl_join_params join_params;
-	size_t join_params_size = 0;
+    size_t join_params_size = 0;
 	s32 err = 0;
 	s32 wsec = 0;
 	s32 bcnprd;
@@ -1880,12 +1879,14 @@ wl_cfg80211_join_ibss(struct wiphy *wiphy, struct net_device *dev,
 		WL_ERR(("auth error %d\n", err));
 		return BCME_ERROR;
 	}
+
 	/* set wsec */
 	err = wldev_iovar_setint_bsscfg(dev, "wsec", wsec, bssidx);
 	if (err < 0) {
 		WL_ERR(("wsec error %d\n", err));
 		return BCME_ERROR;
 	}
+
 	/* set upper-layer auth */
 	err = wldev_iovar_setint_bsscfg(dev, "wpa_auth", 0, bssidx);
 	if (err < 0) {
@@ -1914,7 +1915,7 @@ wl_cfg80211_join_ibss(struct wiphy *wiphy, struct net_device *dev,
 	memcpy(join_params.ssid.SSID, params->ssid, join_params.ssid.SSID_len);
 	join_params.ssid.SSID_len = htod32(join_params.ssid.SSID_len);
 	join_params_size = sizeof(join_params.ssid);
-	wl_update_prof(wl, NULL, &join_params.ssid, WL_PROF_SSID);
+	wl_update_prof(wl, dev, NULL, (void *)&join_params.ssid, WL_PROF_SSID);
 
 	/* BSSID */
 	if (params->bssid) {
@@ -1924,7 +1925,7 @@ wl_cfg80211_join_ibss(struct wiphy *wiphy, struct net_device *dev,
 	} else {
 		memcpy(&join_params.params.bssid, &ether_bcast, ETH_ALEN);
 	}
-	wl_update_prof(wl, NULL, &join_params.params.bssid, WL_PROF_BSSID);
+	wl_update_prof(wl, dev, NULL, (void *)&join_params.params.bssid, WL_PROF_BSSID);
 
 	/* Channel */
 	if (params->channel) {
@@ -1958,7 +1959,7 @@ wl_cfg80211_join_ibss(struct wiphy *wiphy, struct net_device *dev,
 		goto done;
 	}
 
-	wl_set_drv_status(wl, CONNECTING);
+	wl_set_drv_status(wl, CONNECTING, dev);
 
 done:
 	WL_TRACE(("Exit\n"));
@@ -2940,7 +2941,7 @@ wl_cfg80211_get_station(struct wiphy *wiphy, struct net_device *dev,
 			bcm_ether_ntoa((const struct ether_addr *)mac, eabuf), sinfo->inactive_time,
 			sta->idle * 1000));
 #endif
-	} else if (get_mode_by_netdev(wl, dev) == WL_MODE_BSS || wl_is_ibssmode(wl, dev)) {
+	} else if (wl_get_mode_by_netdev(wl, dev) == WL_MODE_BSS || wl_is_ibssmode(wl, dev)) {
 		u8 *curmacp = wl_read_prof(wl, dev, WL_PROF_BSSID);
 		err = -ENODEV;
 		if (!wl_get_drv_status(wl, CONNECTED, dev) ||
@@ -4970,11 +4971,11 @@ wl_notify_connect_status(struct wl_priv *wl, struct net_device *ndev,
 			wl->deauth_reason = 0;
 			if (wl_is_ibssmode(wl, ndev)) {
 				printk("cfg80211_ibss_joined\n");
-				wl_inform_ibss(wl, ndev, (s8 *)&e->addr);
+                wl_inform_ibss(wl, ndev, (s8 *)&e->addr);
 				cfg80211_ibss_joined(ndev, (s8 *)&e->addr,
 					GFP_KERNEL);
-				wl_clr_drv_status(wl, CONNECTING);
-				wl_set_drv_status(wl, CONNECTED);
+                wl_clr_drv_status(wl, CONNECTING, ndev);
+                wl_set_drv_status(wl, CONNECTED, ndev);
 				WL_DBG(("joined in IBSS network\n"));
 			} else {
 				if (!wl_get_drv_status(wl, DISCONNECTING, ndev)) {
@@ -5033,11 +5034,12 @@ wl_notify_connect_status(struct wl_priv *wl, struct net_device *ndev,
 					wl_iscan_aborted(wl);
 				}
 			}
-			if (wl_get_drv_status(wl, CONNECTING)) {
-				if (wl_is_ibssmode(wl, ndev))
-                    wl_clr_drv_status(wl, CONNECTING);
-            else
-                wl_bss_connect_done(wl, ndev, e, data, false);
+			if (wl_get_drv_status(wl, CONNECTING, ndev)) {
+                if (wl_is_ibssmode(wl, ndev))
+                    wl_clr_drv_status(wl, CONNECTING, ndev);
+                else
+				    wl_bss_connect_done(wl, ndev, e, data, false);
+            }
 		} else {
 			printk("%s nothing\n", __FUNCTION__);
 		}
