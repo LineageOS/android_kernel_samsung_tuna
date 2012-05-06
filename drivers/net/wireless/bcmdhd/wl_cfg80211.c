@@ -1005,12 +1005,7 @@ wl_cfg80211_change_virtual_iface(struct wiphy *wiphy, struct net_device *ndev,
 	default:
 		return -EINVAL;
 	}
-	err = wldev_ioctl(ndev, WLC_SET_INFRA, &infra, sizeof(infra), true);
-	if (unlikely(err)) {
-		WL_ERR(("WLC_SET_INFRA error (%d)\n", err));
-		return err;
-	}
-	WL_DBG(("set infra = %d", infra));
+
 	wl_set_mode_by_netdev(wl, ndev, mode);
 
 	if (ap) {
@@ -1050,7 +1045,14 @@ wl_cfg80211_change_virtual_iface(struct wiphy *wiphy, struct net_device *ndev,
 			WL_ERR(("Cannot change the interface for GO or SOFTAP\n"));
 			return -EINVAL;
 		}
-	}
+	} else {
+	    err = wldev_ioctl(ndev, WLC_SET_INFRA, &infra, sizeof(infra), true);
+	    if (unlikely(err)) {
+		    WL_ERR(("WLC_SET_INFRA error (%d)\n", err));
+		    return err;
+	    }
+	    WL_DBG(("set infra = %d", infra));
+    }
 
 	ndev->ieee80211_ptr->iftype = type;
 	return 0;
