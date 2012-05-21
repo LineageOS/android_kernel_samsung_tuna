@@ -4506,7 +4506,7 @@ static s32 wl_setup_wiphy(struct wireless_dev *wdev, struct device *sdiofunc_dev
 	wdev->wiphy->flags |= WIPHY_FLAG_SUPPORTS_SCHED_SCAN;
 #endif /* WL_SCHED_SCAN */
 	wdev->wiphy->interface_modes =
-		BIT(NL80211_IFTYPE_STATION)
+		BIT(NL80211_IFTYPE_STATION) | BIT(NL80211_IFTYPE_ADHOC)
 		| BIT(NL80211_IFTYPE_AP) | BIT(NL80211_IFTYPE_MONITOR);
 
 	wdev->wiphy->bands[IEEE80211_BAND_2GHZ] = &__wl_band_2ghz;
@@ -6221,13 +6221,6 @@ static s32 wl_escan_handler(struct wl_priv *wl,
 		if (bi_length != (dtoh32(escan_result->buflen) - WL_ESCAN_RESULTS_FIXED_SIZE)) {
 			WL_ERR(("Invalid bss_info length %d: ignoring\n", bi_length));
 			goto exit;
-		}
-
-		if (!(wl_to_wiphy(wl)->interface_modes & BIT(NL80211_IFTYPE_ADHOC))) {
-			if (dtoh16(bi->capability) & DOT11_CAP_IBSS) {
-				WL_ERR(("Ignoring IBSS result\n"));
-				goto exit;
-			}
 		}
 
 		if (wl_get_drv_status_all(wl, SENDING_ACT_FRM)) {
