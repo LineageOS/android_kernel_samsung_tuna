@@ -12,6 +12,8 @@
 
 #include <linux/linkage.h>
 
+.arch_extension sec 
+
 /*
  * This is common routine to manage secure monitor API
  * used to modify the PL310 secure registers.

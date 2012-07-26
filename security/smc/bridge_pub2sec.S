@@ -26,6 +26,8 @@
 #define PUB2SEC_NOCST        0xFF
 #define SMICODEPUB_NEWTASK   0x00
 
+.arch_extension sec
+
 /*
  * RPC status:
  *  - 0: the secure world yielded due to an interrupt

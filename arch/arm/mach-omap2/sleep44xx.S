@@ -20,6 +20,8 @@
 
 #include "omap4-sar-layout.h"
 
+.arch_extension sec
+
 #ifdef CONFIG_SMP
 
 /* Masks used for MMU manipulation */
