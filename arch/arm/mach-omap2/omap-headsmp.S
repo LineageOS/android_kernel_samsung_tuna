@@ -31,6 +31,7 @@
  * register AuxCoreBoot0.
  */
 ENTRY(omap_secondary_startup)
+.arch_extension sec
 hold:	ldr	r12,=0x103
 	dsb
 	smc	#0			@ read from AuxCoreBoot0

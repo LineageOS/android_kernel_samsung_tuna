@@ -133,6 +133,7 @@ ENDPROC(enable_omap3630_toggle_l2_on_restore)
 /* Function to call rom code to save secure ram context */
 	.align	3
 ENTRY(save_secure_ram_context)
+.arch_extension sec
 	stmfd	sp!, {r1-r12, lr}	@ save registers on stack
 	adr	r3, api_params		@ r3 points to parameters
 	str	r0, [r3,#0x4]		@ r0 has sdram address

@@ -23,6 +23,7 @@
  */
 
 ENTRY(omap_smc1)
+.arch_extension sec
 	stmfd   sp!, {r2-r12, lr}
 	mov	r12, r0
 	mov 	r0, r1
@@ -41,6 +42,7 @@ ENDPROC(omap_smc1)
  *	    with number of parametrs
  */
 ENTRY(omap_smc2)
+.arch_extension sec
 	stmfd   sp!, {r1-r12, lr}
 	mov	r3, r2
 	mov	r2, r1

@@ -82,6 +82,7 @@ ppa_zero_params:
  */
 
 ENTRY(omap4_cpu_suspend)
+.arch_extension sec
 	stmfd	sp!, {r0-r12, lr}		@ Save registers on stack
 	cmp	r1, #0x0
 	beq	do_WFI				@ Nothing to save, jump to WFI

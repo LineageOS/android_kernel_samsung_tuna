@@ -41,7 +41,7 @@
 #else
 #define INVALIDATE_BTB
 #endif
-
+.arch_extension sec
 schedule_secure_world:
 	.global schedule_secure_world
 
