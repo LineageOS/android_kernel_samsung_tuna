@@ -28,9 +28,12 @@
 #include <linux/regulator/fixed.h>
 #include <plat/mmc.h>
 
+
 #include <linux/random.h>
 #include <linux/jiffies.h>
+#include <linux/rndwifimac.h>
 
+#include <mach/id.h>
 #include "hsmmc.h"
 #include "control.h"
 #include "mux.h"
@@ -294,14 +297,30 @@ static int tuna_wifi_get_mac_addr(unsigned char *buf)
 
 	if (!buf)
 		return -EFAULT;
-
-	if ((tuna_mac_addr[4] == 0) && (tuna_mac_addr[5] == 0)) {
+	#ifdef CONFIG_RND_WIFI_MAC
+	 if (randomize_wifi_mac != 0) {
+		uint rand_mac2;
 		srandom32((uint)jiffies);
 		rand_mac = random32();
-		tuna_mac_addr[3] = (unsigned char)rand_mac;
-		tuna_mac_addr[4] = (unsigned char)(rand_mac >> 8);
-		tuna_mac_addr[5] = (unsigned char)(rand_mac >> 16);
-	}
+		srandom32((uint)jiffies);
+		rand_mac2 = random32();
+		tuna_mac_addr[0] = (unsigned char)rand_mac;
+		tuna_mac_addr[1] = (unsigned char)(rand_mac >> 8);
+		tuna_mac_addr[2] = (unsigned char)(rand_mac >> 16);
+		tuna_mac_addr[3] = (unsigned char)rand_mac2;
+		tuna_mac_addr[4] = (unsigned char)(rand_mac2 >> 8);
+		tuna_mac_addr[5] = (unsigned char)(rand_mac2 >> 16);
+	 } else
+	#else
+		if ((tuna_mac_addr[4] == 0) && (tuna_mac_addr[5] == 0)) {
+			struct omap_die_id oid;
+			omap_get_die_id(&oid);
+			rand_mac = (uint)oid.id_3; // id_3 or id_1 ?
+			tuna_mac_addr[3] = (unsigned char)rand_mac;
+			tuna_mac_addr[4] = (unsigned char)(rand_mac >> 8);
+			tuna_mac_addr[5] = (unsigned char)(rand_mac >> 16);
+		}
+	#endif
 	memcpy(buf, tuna_mac_addr, IFHWADDRLEN);
 	return 0;
 }

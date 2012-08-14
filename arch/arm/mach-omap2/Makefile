@@ -271,6 +271,8 @@ obj-$(CONFIG_MACH_TUNA)			+= board-tuna-connector.o
 obj-$(CONFIG_MACH_TUNA)			+= board-tuna-pogo.o
 obj-$(CONFIG_MACH_TUNA)			+= board-tuna-usbhost.o
 
+obj-$(CONFIG_RND_WIFI_MAC)          += rndwifimac.o
+
 obj-$(CONFIG_MACH_OMAP3517EVM)		+= board-am3517evm.o \
 					   omap_phy_internal.o \
 
