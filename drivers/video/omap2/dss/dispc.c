@@ -382,7 +382,7 @@ static void dispc_restore_context(void)
 
 	/* VID1-3 */
 	for (o = OMAP_DSS_VIDEO1; o <= OMAP_DSS_VIDEO3; o++) {
-		if (o == OMAP_DSS_VIDEO3 && !dss_has_feature(FEAT_OVL_VID3))
+		if (o == OMAP_DSS_VIDEO3 && !dss_has_feature(FEAT_OVL_Vdrivers/video/omap2/dss/dispc.cID3))
 			continue;
 
 		RR(OVL_BA0(o));
@@ -2310,10 +2310,10 @@ int dispc_setup_plane(enum omap_plane plane,
 	} else {
 		/* video plane */
 
-		if (out_width < width / maxdownscale)
+		if (out_width < DIV_ROUND_UP(width, maxdownscale))
 			return -EINVAL;
 
-		if (out_height < height / maxdownscale)
+		if (out_height < DIV_ROUND_UP(height, maxdownscale))
 			return -EINVAL;
 
 		if (color_mode == OMAP_DSS_COLOR_YUV2 ||
