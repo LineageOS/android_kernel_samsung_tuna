@@ -1548,18 +1548,6 @@ static void write_cinfo(__be32 **p, struct nfsd4_change_info *c)
 								\
 	save = resp->p;
 
-static bool seqid_mutating_err(__be32 err)
-{
-	/* rfc 3530 section 8.1.5: */
-	return	err != nfserr_stale_clientid &&
-		err != nfserr_stale_stateid &&
-		err != nfserr_bad_stateid &&
-		err != nfserr_bad_seqid &&
-		err != nfserr_bad_xdr &&
-		err != nfserr_resource &&
-		err != nfserr_nofilehandle;
-}
-
 /*
  * Routine for encoding the result of a "seqid-mutating" NFSv4 operation.  This
  * is where sequence id's are incremented, and the replay cache is filled.
@@ -1954,7 +1942,7 @@ nfsd4_encode_fattr(struct svc_fh *fhp, struct svc_export *exp,
 	if (bmval0 & FATTR4_WORD0_UNIQUE_HANDLES) {
 		if ((buflen -= 4) < 0)
 			goto out_resource;
-		WRITE32(0);
+		WRITE32(1);
 	}
 	if (bmval0 & FATTR4_WORD0_LEASE_TIME) {
 		if ((buflen -= 4) < 0)

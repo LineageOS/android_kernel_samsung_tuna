@@ -32,7 +32,6 @@
 #include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/cpumask.h>
-#include <linux/sched.h>	/* for current / set_cpus_allowed() */
 #include <linux/io.h>
 #include <linux/delay.h>
 
@@ -53,6 +52,9 @@ static DEFINE_MUTEX(fidvid_mutex);
 static DEFINE_PER_CPU(struct powernow_k8_data *, powernow_data);
 
 static int cpu_family = CPU_OPTERON;
+
+/* array to map SW pstate number to acpi state */
+static u32 ps_to_as[8];
 
 /* array to map SW pstate number to acpi state */
 static u32 ps_to_as[8];
@@ -1132,16 +1134,23 @@ static int transition_frequency_pstate(struct powernow_k8_data *data,
 	return res;
 }
 
-/* Driver entry point to switch to the target frequency */
-static int powernowk8_target(struct cpufreq_policy *pol,
-		unsigned targfreq, unsigned relation)
+struct powernowk8_target_arg {
+	struct cpufreq_policy		*pol;
+	unsigned			targfreq;
+	unsigned			relation;
+};
+
+static long powernowk8_target_fn(void *arg)
 {
-	cpumask_var_t oldmask;
+	struct powernowk8_target_arg *pta = arg;
+	struct cpufreq_policy *pol = pta->pol;
+	unsigned targfreq = pta->targfreq;
+	unsigned relation = pta->relation;
 	struct powernow_k8_data *data = per_cpu(powernow_data, pol->cpu);
 	u32 checkfid;
 	u32 checkvid;
 	unsigned int newstate;
-	int ret = -EIO;
+	int ret;
 
 	if (!data)
 		return -EINVAL;
@@ -1149,29 +1158,16 @@ static int powernowk8_target(struct cpufreq_policy *pol,
 	checkfid = data->currfid;
 	checkvid = data->currvid;
 
-	/* only run on specific CPU from here on. */
-	/* This is poor form: use a workqueue or smp_call_function_single */
-	if (!alloc_cpumask_var(&oldmask, GFP_KERNEL))
-		return -ENOMEM;
-
-	cpumask_copy(oldmask, tsk_cpus_allowed(current));
-	set_cpus_allowed_ptr(current, cpumask_of(pol->cpu));
-
-	if (smp_processor_id() != pol->cpu) {
-		printk(KERN_ERR PFX "limiting to cpu %u failed\n", pol->cpu);
-		goto err_out;
-	}
-
 	if (pending_bit_stuck()) {
 		printk(KERN_ERR PFX "failing targ, change pending bit set\n");
-		goto err_out;
+		return -EIO;
 	}
 
 	pr_debug("targ: cpu %d, %d kHz, min %d, max %d, relation %d\n",
 		pol->cpu, targfreq, pol->min, pol->max, relation);
 
 	if (query_current_values_with_pending_wait(data))
-		goto err_out;
+		return -EIO;
 
 	if (cpu_family != CPU_HW_PSTATE) {
 		pr_debug("targ: curr fid 0x%x, vid 0x%x\n",

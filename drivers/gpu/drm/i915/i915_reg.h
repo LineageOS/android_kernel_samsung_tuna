@@ -537,6 +537,21 @@
 
 #define GEN6_BSD_RNCID			0x12198
 
+#define GEN7_FF_THREAD_MODE		0x20a0
+#define   GEN7_FF_SCHED_MASK		0x0077070
+#define   GEN7_FF_TS_SCHED_HS1		(0x5<<16)
+#define   GEN7_FF_TS_SCHED_HS0		(0x3<<16)
+#define   GEN7_FF_TS_SCHED_LOAD_BALANCE	(0x1<<16)
+#define   GEN7_FF_TS_SCHED_HW		(0x0<<16) /* Default */
+#define   GEN7_FF_VS_SCHED_HS1		(0x5<<12)
+#define   GEN7_FF_VS_SCHED_HS0		(0x3<<12)
+#define   GEN7_FF_VS_SCHED_LOAD_BALANCE	(0x1<<12) /* Default */
+#define   GEN7_FF_VS_SCHED_HW		(0x0<<12)
+#define   GEN7_FF_DS_SCHED_HS1		(0x5<<4)
+#define   GEN7_FF_DS_SCHED_HS0		(0x3<<4)
+#define   GEN7_FF_DS_SCHED_LOAD_BALANCE	(0x1<<4)  /* Default */
+#define   GEN7_FF_DS_SCHED_HW		(0x0<<4)
+
 /*
  * Framebuffer compression (915+ only)
  */
@@ -2862,6 +2877,20 @@
 #define GEN7_SQ_CHICKEN_MBCUNIT_CONFIG		0x9030
 #define  GEN7_SQ_CHICKEN_MBCUNIT_SQINTMOB	(1<<11)
 
+/* GEN7 chicken */
+#define GEN7_COMMON_SLICE_CHICKEN1		0x7010
+# define GEN7_CSC1_RHWO_OPT_DISABLE_IN_RCC	((1<<10) | (1<<26))
+
+#define GEN7_L3CNTLREG1				0xB01C
+#define  GEN7_WA_FOR_GEN7_L3_CONTROL			0x3C4FFF8C
+
+#define GEN7_L3_CHICKEN_MODE_REGISTER		0xB030
+#define  GEN7_WA_L3_CHICKEN_MODE				0x20000000
+
+/* WaCatErrorRejectionIssue */
+#define GEN7_SQ_CHICKEN_MBCUNIT_CONFIG		0x9030
+#define  GEN7_SQ_CHICKEN_MBCUNIT_SQINTMOB	(1<<11)
+
 /* PCH */
 
 /* south display engine interrupt */
@@ -3097,6 +3126,11 @@
 #define  TRANS_10BPC            (1<<5)
 #define  TRANS_6BPC             (2<<5)
 #define  TRANS_12BPC            (3<<5)
+
+#define _TRANSA_CHICKEN2	 0xf0064
+#define _TRANSB_CHICKEN2	 0xf1064
+#define TRANS_CHICKEN2(pipe) _PIPE(pipe, _TRANSA_CHICKEN2, _TRANSB_CHICKEN2)
+#define   TRANS_AUTOTRAIN_GEN_STALL_DIS	(1<<31)
 
 #define SOUTH_CHICKEN2		0xc2004
 #define  DPLS_EDP_PPS_FIX_DIS	(1<<0)
@@ -3384,6 +3418,11 @@
 #define  FORCEWAKE_ACK				0x130090
 
 #define  GT_FIFO_FREE_ENTRIES			0x120008
+
+#define GEN6_UCGCTL2				0x9404
+# define GEN6_RCZUNIT_CLOCK_GATE_DISABLE		(1 << 13)
+# define GEN6_RCPBUNIT_CLOCK_GATE_DISABLE		(1 << 12)
+# define GEN6_RCCUNIT_CLOCK_GATE_DISABLE		(1 << 11)
 
 #define GEN6_UCGCTL2				0x9404
 # define GEN6_RCZUNIT_CLOCK_GATE_DISABLE		(1 << 13)

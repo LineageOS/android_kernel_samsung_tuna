@@ -37,8 +37,6 @@ static const char *_name = DM_NAME;
 static unsigned int major = 0;
 static unsigned int _major = 0;
 
-static DEFINE_IDR(_minor_idr);
-
 static DEFINE_SPINLOCK(_minor_lock);
 /*
  * For bio-based dm.
@@ -315,12 +313,6 @@ static void __exit dm_exit(void)
 
 	while (i--)
 		_exits[i]();
-
-	/*
-	 * Should be empty by this point.
-	 */
-	idr_remove_all(&_minor_idr);
-	idr_destroy(&_minor_idr);
 }
 
 /*
@@ -1571,6 +1563,15 @@ static int map_request(struct dm_target *ti, struct request *clone,
 	 */
 	dm_get(md);
 
+	/*
+	 * Hold the md reference here for the in-flight I/O.
+	 * We can't rely on the reference count by device opener,
+	 * because the device may be closed during the request completion
+	 * when all bios are completed.
+	 * See the comment in rq_completed() too.
+	 */
+	dm_get(md);
+
 	tio->ti = ti;
 	r = ti->type->map_rq(ti, clone, &tio->info);
 	switch (r) {
@@ -1713,6 +1714,8 @@ static int dm_any_congested(void *congested_data, int bdi_bits)
 /*-----------------------------------------------------------------
  * An IDR is used to keep track of allocated minor numbers.
  *---------------------------------------------------------------*/
+static DEFINE_IDR(_minor_idr);
+
 static void free_minor(int minor)
 {
 	spin_lock(&_minor_lock);

@@ -1834,6 +1834,16 @@ static int sis190_mac_addr(struct net_device  *dev, void *p)
 	return rc;
 }
 
+static int sis190_mac_addr(struct net_device  *dev, void *p)
+{
+	int rc;
+
+	rc = eth_mac_addr(dev, p);
+	if (!rc)
+		sis190_init_rxfilter(dev);
+	return rc;
+}
+
 static const struct net_device_ops sis190_netdev_ops = {
 	.ndo_open		= sis190_open,
 	.ndo_stop		= sis190_close,

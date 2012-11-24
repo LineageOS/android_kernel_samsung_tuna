@@ -956,7 +956,8 @@ serial_omap_set_termios(struct uart_port *port, struct ktermios *termios,
 
 	serial_omap_set_mctrl(&up->port, up->port.mctrl);
 	/* Software Flow Control Configuration */
-	serial_omap_configure_xonxoff(up, termios);
+	if (termios->c_iflag & (IXON | IXOFF))
+		serial_omap_configure_xonxoff(up, termios);
 
 	/* Now we are ready for RX data: enable rts line */
 	if (up->rts_mux_driver_control && up->rts_pullup_in_suspend) {

@@ -35,9 +35,6 @@
 #define OHCI_INTRSTATUS		0x0c
 #define OHCI_INTRENABLE		0x10
 #define OHCI_INTRDISABLE	0x14
-#define OHCI_FMINTERVAL		0x34
-#define OHCI_HCFS		(3 << 6)	/* hc functional state */
-#define OHCI_HCR		(1 << 0)	/* host controller reset */
 #define OHCI_OCR		(1 << 3)	/* ownership change request */
 #define OHCI_CTRL_RWC		(1 << 9)	/* remote wakeup connected */
 #define OHCI_CTRL_IR		(1 << 8)	/* interrupt routing */
@@ -466,8 +463,6 @@ static void __devinit quirk_usb_handoff_ohci(struct pci_dev *pdev)
 {
 	void __iomem *base;
 	u32 control;
-	u32 fminterval;
-	int cnt;
 
 	if (!mmio_resource_enabled(pdev, 0))
 		return;
@@ -620,7 +615,7 @@ static void __devinit quirk_usb_disable_ehci(struct pci_dev *pdev)
 	void __iomem *base, *op_reg_base;
 	u32	hcc_params, cap, val;
 	u8	offset, cap_length;
-	int	wait_time, count = 256/4;
+	int	wait_time, delta, count = 256/4;
 
 	if (!mmio_resource_enabled(pdev, 0))
 		return;
@@ -666,10 +661,11 @@ static void __devinit quirk_usb_disable_ehci(struct pci_dev *pdev)
 		writel(val, op_reg_base + EHCI_USBCMD);
 
 		wait_time = 2000;
+		delta = 100;
 		do {
 			writel(0x3f, op_reg_base + EHCI_USBSTS);
-			udelay(100);
-			wait_time -= 100;
+			udelay(delta);
+			wait_time -= delta;
 			val = readl(op_reg_base + EHCI_USBSTS);
 			if ((val == ~(u32)0) || (val & EHCI_USBSTS_HALTED)) {
 				break;
@@ -810,7 +806,7 @@ static void __devinit quirk_usb_handoff_xhci(struct pci_dev *pdev)
 
 	/* If the BIOS owns the HC, signal that the OS wants it, and wait */
 	if (val & XHCI_HC_BIOS_OWNED) {
-		writel(val | XHCI_HC_OS_OWNED, base + ext_cap_offset);
+		writel(val & XHCI_HC_OS_OWNED, base + ext_cap_offset);
 
 		/* Wait for 5 seconds with 10 microsecond polling interval */
 		timeout = handshake(base + ext_cap_offset, XHCI_HC_BIOS_OWNED,
@@ -870,22 +866,6 @@ hc_init:
 
 static void __devinit quirk_usb_early_handoff(struct pci_dev *pdev)
 {
-	/* Skip Netlogic mips SoC's internal PCI USB controller.
-	 * This device does not need/support EHCI/OHCI handoff
-	 */
-	if (pdev->vendor == 0x184e)	/* vendor Netlogic */
-		return;
-	if (pdev->class != PCI_CLASS_SERIAL_USB_UHCI &&
-			pdev->class != PCI_CLASS_SERIAL_USB_OHCI &&
-			pdev->class != PCI_CLASS_SERIAL_USB_EHCI &&
-			pdev->class != PCI_CLASS_SERIAL_USB_XHCI)
-		return;
-
-	if (pci_enable_device(pdev) < 0) {
-		dev_warn(&pdev->dev, "Can't enable PCI device, "
-				"BIOS handoff failed.\n");
-		return;
-	}
 	if (pdev->class == PCI_CLASS_SERIAL_USB_UHCI)
 		quirk_usb_handoff_uhci(pdev);
 	else if (pdev->class == PCI_CLASS_SERIAL_USB_OHCI)
@@ -894,6 +874,5 @@ static void __devinit quirk_usb_early_handoff(struct pci_dev *pdev)
 		quirk_usb_disable_ehci(pdev);
 	else if (pdev->class == PCI_CLASS_SERIAL_USB_XHCI)
 		quirk_usb_handoff_xhci(pdev);
-	pci_disable_device(pdev);
 }
 DECLARE_PCI_FIXUP_FINAL(PCI_ANY_ID, PCI_ANY_ID, quirk_usb_early_handoff);

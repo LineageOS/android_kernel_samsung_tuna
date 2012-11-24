@@ -59,6 +59,9 @@
 
 #define OMAP_HDMI_TIMINGS_NB			34
 
+#define HDMI_DEFAULT_REGN 15
+#define HDMI_DEFAULT_REGM2 1
+
 static struct {
 	struct mutex lock;
 	struct omap_display_platform_data *pdata;
@@ -465,6 +468,23 @@ static int hdmi_power_on(struct omap_dss_device *dssdev)
 	    hdmi.custom_set &&
 	    hdmi.wp_reset_done)
 		(*hdmi.hdmi_start_frame_cb)();
+
+	r = request_threaded_irq(gpio_to_irq(hdmi.hpd_gpio),
+			NULL, hpd_irq_handler,
+			IRQF_DISABLED | IRQF_TRIGGER_RISING |
+			IRQF_TRIGGER_FALLING, "hpd", NULL);
+	if (r) {
+		DSSERR("HPD IRQ request failed\n");
+		hdmi_set_phy_pwr(HDMI_PHYPWRCMD_OFF);
+		return r;
+	}
+
+	r = hdmi_check_hpd_state();
+	if (r) {
+		free_irq(gpio_to_irq(hdmi.hpd_gpio), NULL);
+		hdmi_set_phy_pwr(HDMI_PHYPWRCMD_OFF);
+		return r;
+	}
 
 	return 0;
 err:

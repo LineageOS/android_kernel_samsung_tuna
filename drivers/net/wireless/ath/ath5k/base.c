@@ -1818,6 +1818,7 @@ ath5k_beacon_update(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 	struct ath5k_softc *sc = hw->priv;
 	struct ath5k_vif *avf = (void *)vif->drv_priv;
 	struct sk_buff *skb;
+	int err;
 
 	if (WARN_ON(!vif)) {
 		ret = -EINVAL;

@@ -369,10 +369,8 @@ static int check_syslog_permissions(int type, bool from_file)
 			return 0;
 		/* For historical reasons, accept CAP_SYS_ADMIN too, with a warning */
 		if (capable(CAP_SYS_ADMIN)) {
-			printk_once(KERN_WARNING "%s (%d): "
-				 "Attempt to access syslog with CAP_SYS_ADMIN "
-				 "but no CAP_SYSLOG (deprecated).\n",
-				 current->comm, task_pid_nr(current));
+			WARN_ONCE(1, "Attempt to access syslog with CAP_SYS_ADMIN "
+				 "but no CAP_SYSLOG (deprecated).\n");
 			return 0;
 		}
 		return -EPERM;
@@ -1640,7 +1638,7 @@ static int __init printk_late_init(void)
 	struct console *con;
 
 	for_each_console(con) {
-		if (!keep_bootcon && con->flags & CON_BOOT) {
+		if (con->flags & CON_BOOT) {
 			printk(KERN_INFO "turn off boot console %s%d\n",
 				con->name, con->index);
 			unregister_console(con);

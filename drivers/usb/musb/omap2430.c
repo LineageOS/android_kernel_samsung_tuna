@@ -325,8 +325,7 @@ static void musb_otg_notifier_work(struct work_struct *data_notifier_work)
 
 static int omap2430_musb_init(struct musb *musb)
 {
-	u32 l;
-	int status = 0;
+	u32 l, status = 0;
 	struct device *dev = musb->controller;
 	struct musb_hdrc_platform_data *plat = dev->platform_data;
 	struct omap_musb_board_data *data = plat->board_data;
@@ -507,13 +506,13 @@ static int __init omap2430_probe(struct platform_device *pdev)
 		goto err2;
 	}
 
-	pm_runtime_enable(&pdev->dev);
-
 	ret = platform_device_add(musb);
 	if (ret) {
 		dev_err(&pdev->dev, "failed to register musb device\n");
 		goto err2;
 	}
+
+	pm_runtime_enable(&pdev->dev);
 
 	return 0;
 

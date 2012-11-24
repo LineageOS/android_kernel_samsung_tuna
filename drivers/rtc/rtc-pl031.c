@@ -312,6 +312,7 @@ static int pl031_probe(struct amba_device *adev, const struct amba_id *id)
 	int ret;
 	struct pl031_local *ldata;
 	struct rtc_class_ops *ops = id->data;
+	unsigned long time;
 
 	ret = amba_request_regions(adev, NULL);
 	if (ret)

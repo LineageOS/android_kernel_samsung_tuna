@@ -426,6 +426,7 @@ static int __register_pernet_operations(struct list_head *list,
 				goto out_undo;
 			list_add_tail(&net->exit_list, &net_exit_list);
 		}
+		max_gen_ptrs = max_t(unsigned int, max_gen_ptrs, *ops->id);
 	}
 	return 0;
 

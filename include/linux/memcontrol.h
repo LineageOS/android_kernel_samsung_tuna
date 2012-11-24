@@ -35,7 +35,8 @@ enum mem_cgroup_page_stat_item {
 extern unsigned long mem_cgroup_isolate_pages(unsigned long nr_to_scan,
 					struct list_head *dst,
 					unsigned long *scanned, int order,
-					int mode, struct zone *z,
+					isolate_mode_t mode,
+					struct zone *z,
 					struct mem_cgroup *mem_cont,
 					int active, int file);
 
@@ -370,6 +371,10 @@ static inline void mem_cgroup_split_huge_fixup(struct page *head,
 
 static inline
 void mem_cgroup_count_vm_event(struct mm_struct *mm, enum vm_event_item idx)
+{
+}
+static inline void mem_cgroup_replace_page_cache(struct page *oldpage,
+				struct page *newpage)
 {
 }
 static inline void mem_cgroup_replace_page_cache(struct page *oldpage,

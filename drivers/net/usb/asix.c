@@ -314,11 +314,12 @@ static int asix_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
 	skb_pull(skb, 4);
 
 	while (skb->len > 0) {
-		if ((header & 0x07ff) != ((~header >> 16) & 0x07ff))
+		if ((short)(header & 0x0000ffff) !=
+		    ~((short)((header & 0xffff0000) >> 16))) {
 			netdev_err(dev->net, "asix_rx_fixup() Bad Header Length\n");
-
+		}
 		/* get the packet length */
-		size = (u16) (header & 0x000007ff);
+		size = (u16) (header & 0x0000ffff);
 
 		if ((skb->len) - ((size + 1) & 0xfffe) == 0) {
 			u8 alignment = (unsigned long)skb->data & 0x3;
@@ -371,7 +372,7 @@ static int asix_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
 
 		skb_pull(skb, (size + 1) & 0xfffe);
 
-		if (skb->len < sizeof(header))
+		if (skb->len == 0)
 			break;
 
 		head = (u8 *) skb->data;
@@ -1485,10 +1486,6 @@ static const struct usb_device_id	products [] = {
 	USB_DEVICE (0x6189, 0x182d),
 	.driver_info =  (unsigned long) &ax8817x_info,
 }, {
-	// Sitecom LN-031 "USB 2.0 10/100/1000 Ethernet adapter"
-	USB_DEVICE (0x0df6, 0x0056),
-	.driver_info =  (unsigned long) &ax88178_info,
-}, {
 	// corega FEther USB2-TX
 	USB_DEVICE (0x07aa, 0x0017),
 	.driver_info =  (unsigned long) &ax8817x_info,
@@ -1504,10 +1501,6 @@ static const struct usb_device_id	products [] = {
 	// JVC MP-PRX1 Port Replicator
 	USB_DEVICE (0x04f1, 0x3008),
 	.driver_info = (unsigned long) &ax8817x_info,
-}, {
-	// ASIX AX88772B 10/100
-	USB_DEVICE (0x0b95, 0x772b),
-	.driver_info = (unsigned long) &ax88772_info,
 }, {
 	// ASIX AX88772 10/100
 	USB_DEVICE (0x0b95, 0x7720),
@@ -1563,10 +1556,6 @@ static const struct usb_device_id	products [] = {
 }, {
 	// ASIX 88772a
 	USB_DEVICE(0x0db0, 0xa877),
-	.driver_info = (unsigned long) &ax88772_info,
-}, {
-	// Asus USB Ethernet Adapter
-	USB_DEVICE (0x0b95, 0x7e2b),
 	.driver_info = (unsigned long) &ax88772_info,
 },
 	{ },		// END
