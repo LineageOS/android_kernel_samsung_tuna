@@ -1767,6 +1767,9 @@ static s32 wl_set_rts(struct net_device *dev, u32 rts_threshold)
 {
 	s32 err = 0;
 
+	if (rts_threshold == -1) /* off */
+		rts_threshold = DOT11_DEFAULT_RTS_LEN;
+
 	err = wldev_iovar_setint(dev, "rtsthresh", rts_threshold);
 	if (unlikely(err)) {
 		WL_ERR(("Error (%d)\n", err));
