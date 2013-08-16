@@ -170,7 +170,6 @@ static void omap4_tuna_fixup_orientations_maguro(int revision)
 
 static void omap4_tuna_fixup_orientations_toro(int revision)
 {
-	pr_info("HW %d", revision);
 	if (revision >= 14) {
 		rotcpy(mpu_data.orientation, orientation_back_left_90);
 		rotcpy(mpu_data.accel.orientation, orientation_back);
