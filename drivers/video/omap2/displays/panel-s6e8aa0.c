@@ -70,6 +70,7 @@ enum {
 #include <linux/miscdevice.h>
 #define samoled_COLOR_VERSION 3
 struct omap_dss_device * lcd_;
+int hacky_v1_offset[3] = {0, 0, 0};
 u32 original_color_adj_original_mults[3];
 struct s6e8aa0_data *mul_copy_data;
 #endif
@@ -768,7 +769,14 @@ static void s6e8aa0_setup_gamma_regs(struct s6e8aa0_data *s6, u8 gamma_regs[],
 				__func__, adj, v0, v[V1], c);
 			adj = clamp_t(int, adj, adj_min, adj_max);
 		}
+#ifdef CONFIG_COLOR_HACK
+        int adj_hack = adj + ((hacky_v1_offset[c] * (int)adj) / 100);
+        if (adj_hack > adj_max)
+            adj_hack = adj_max;
+        gamma_regs[gamma_reg_index(c, V1)] = adj_hack;
+#else
 		gamma_regs[gamma_reg_index(c, V1)] = adj;
+#endif
 		v[V1] = v1adj_to_v1(adj + offset, v0);
 
 		v[V255] = s6e8aa0_gamma_lookup(s6, brightness, BV_255, c);
@@ -1128,6 +1136,17 @@ static void s6e8aa0_adjust_brightness_from_mtp(struct s6e8aa0_data *s6)
 
 
 #ifdef CONFIG_COLOR_HACK
+void ColorGammaUpdate(void)
+{
+
+    if (lcd_->state == OMAP_DSS_DISPLAY_ACTIVE) {
+        dsi_bus_lock(lcd_);
+        s6e8aa0_update_brightness(lcd_);
+        dsi_bus_unlock(lcd_);
+    }
+
+}
+
 void brightnessUpdate(void)
 {
     if (lcd_->state == OMAP_DSS_DISPLAY_ACTIVE) {
@@ -1625,10 +1644,61 @@ static ssize_t blue_multiplier_store(struct device *dev, struct device_attribute
 	return size;
 }
 
+static ssize_t red_v1_offset_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%i\n", hacky_v1_offset[0]);
+}
+
+static ssize_t red_v1_offset_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+	u32 value;
+	if (sscanf(buf, "%i", &value) == 1)
+	{
+		hacky_v1_offset[0] = value;
+		ColorGammaUpdate();
+	}
+	return size;
+}
+
+static ssize_t green_v1_offset_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%i\n", hacky_v1_offset[1]);
+}
+
+static ssize_t green_v1_offset_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+	u32 value;
+	if (sscanf(buf, "%i", &value) == 1)
+	{
+		hacky_v1_offset[1] = value;
+		ColorGammaUpdate();
+	}
+	return size;
+}
+
+static ssize_t blue_v1_offset_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%i\n", hacky_v1_offset[2]);
+}
+
+static ssize_t blue_v1_offset_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+	int value;
+	if (sscanf(buf, "%i", &value) == 1)
+	{
+		hacky_v1_offset[2] = value;
+		ColorGammaUpdate();
+	}
+	return size;
+}
+
 static ssize_t samoled_color_version(struct device *dev, struct device_attribute *attr, char *buf) {
 	return sprintf(buf, "%u\n", samoled_COLOR_VERSION);
 }
 
+static DEVICE_ATTR(red_v1_offset, S_IRUGO | S_IWUGO, red_v1_offset_show, red_v1_offset_store);
+static DEVICE_ATTR(green_v1_offset, S_IRUGO | S_IWUGO, green_v1_offset_show, green_v1_offset_store);
+static DEVICE_ATTR(blue_v1_offset, S_IRUGO | S_IWUGO, blue_v1_offset_show, blue_v1_offset_store);
 static DEVICE_ATTR(red_multiplier, S_IRUGO | S_IWUGO, red_multiplier_show, red_multiplier_store);
 static DEVICE_ATTR(red_multiplier_original, S_IRUGO, red_multiplier_original_show, NULL);
 static DEVICE_ATTR(green_multiplier, S_IRUGO | S_IWUGO, green_multiplier_show, green_multiplier_store);
@@ -1639,6 +1709,9 @@ static DEVICE_ATTR(version, S_IRUGO, samoled_color_version, NULL);
 
 
 static struct attribute *samoled_color_attributes[] = {
+	&dev_attr_red_v1_offset.attr,
+	&dev_attr_green_v1_offset.attr,
+	&dev_attr_blue_v1_offset.attr,
 	&dev_attr_red_multiplier.attr,
 	&dev_attr_red_multiplier_original.attr,
 	&dev_attr_green_multiplier.attr,
