@@ -169,7 +169,7 @@ static int mmc_movi_erase_cmd(struct mmc_card *card,
 	return err;
 }
 
-#define TEST_MMC_FW_PATCHING
+//#define TEST_MMC_FW_PATCHING
 
 #if defined(CONFIG_MMC_SAMSUNG_SMART) || defined(TEST_MMC_FW_PATCHING)
 static struct mmc_command wcmd;
