@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9f436f4f_78755598",
+        "filename": "drivers/md/dm-crypt.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 1653,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2015-10-01T02:41:40Z",
+      "side": 1,
+      "message": "Should be able to combine these statements more nicely. That said, this is kind of nasty to just check for a 0 then discard it.",
+      "revId": "9e75ba849036c1f25af2455c5b27f4429fd97b0a",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
