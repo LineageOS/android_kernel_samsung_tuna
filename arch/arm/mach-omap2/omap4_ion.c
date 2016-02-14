@@ -27,6 +27,9 @@
  *   - Tiler non-secure
  */
 
+/* Hardcoded Ducati heap address. */
+#define DUCATI_HEAP_ADDR 0xba300000
+
 static bool system_512m;
 
 static phys_addr_t omap4_smc_addr;
@@ -104,7 +107,9 @@ void __init omap_ion_init(void)
 {
 	int i;
 	int ret;
+#ifndef CONFIG_ION_OMAP_TILER_DYNAMIC_ALLOC
 	u32 nonsecure = omap4_ion_pdata.nonsecure_tiler2d_size;
+#endif
 
 	system_512m = (omap_total_ram_size() == SZ_512M);
 
@@ -129,17 +134,22 @@ void __init omap_ion_init(void)
 		omap4_ion_heap_secure_output_wfdhdcp_size = (SZ_1M * 16);
 #endif
 		omap4_ducati_heap_size = (SZ_1M * 105);
-		omap4_ion_heap_nonsec_tiler_mem_size = nonsecure;
-		omap4_ion_heap_tiler_mem_size =
-					 (ALIGN(omap4_ion_pdata.tiler2d_size +
-					 nonsecure, SZ_2M) - nonsecure);
+#ifdef CONFIG_ION_OMAP_TILER_DYNAMIC_ALLOC
+		omap4_ion_heap_nonsec_tiler_mem_size = 0;
+		omap4_ion_heap_tiler_mem_size = 0;
+#else
+ 		omap4_ion_heap_nonsec_tiler_mem_size = nonsecure;
+ 		omap4_ion_heap_tiler_mem_size =
+ 					 (ALIGN(omap4_ion_pdata.tiler2d_size +
+ 					 nonsecure, SZ_2M) - nonsecure);
+#endif
 	}
 
 	/* carveout addresses */
 	omap4_smc_addr = PLAT_PHYS_OFFSET + omap_total_ram_size() -
 				omap4_smc_size;
 #ifdef CONFIG_MACH_TUNA /* fixed start address of ducati heap */
-	omap4_ion_heap_secure_input_addr = 0xba300000;
+	omap4_ion_heap_secure_input_addr = DUCATI_HEAP_ADDR;
 #else
 	omap4_ion_heap_secure_input_addr = omap4_smc_addr -
 				omap4_ion_heap_secure_input_size;
