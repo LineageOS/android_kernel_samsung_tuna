@@ -29,7 +29,7 @@
 #define GPIO_TOUCH_EN		19
 #define GPIO_TOUCH_IRQ		46
 
-/* touch is on i2c3 */
+/* touch is on i2c4 */
 #define GPIO_TOUCH_SCL	130
 #define GPIO_TOUCH_SDA	131
 
@@ -145,7 +145,7 @@ static struct mms_ts_platform_data mms_ts_pdata = {
 	.gpio_sda	= GPIO_TOUCH_SDA,
 };
 
-static struct i2c_board_info __initdata tuna_i2c3_boardinfo_final[] = {
+static struct i2c_board_info __initdata tuna_i2c4_boardinfo_final[] = {
 	{
 		I2C_BOARD_INFO("mms_ts", 0x48),
 		.flags = I2C_CLIENT_WAKE,
@@ -164,8 +164,8 @@ void __init omap4_tuna_input_init(void)
 	gpio_request(GPIO_TOUCH_EN, "tsp_en");
 	gpio_direction_output(GPIO_TOUCH_EN, 1);
 	omap_mux_init_gpio(GPIO_TOUCH_EN, OMAP_PIN_OUTPUT);
-	gpio_request(GPIO_TOUCH_SCL, "ap_i2c3_scl");
-	gpio_request(GPIO_TOUCH_SDA, "ap_i2c3_sda");
+	gpio_request(GPIO_TOUCH_SCL, "ap_i2c4_scl");
+	gpio_request(GPIO_TOUCH_SDA, "ap_i2c4_sda");
 
 	/* 0x12 == FPCB 3.2
 	 * 0xa1 == FPCB 3.1
@@ -175,8 +175,8 @@ void __init omap4_tuna_input_init(void)
 	else
 		mms_ts_pdata.fw_name = "mms144_ts_rev31.fw";
 
-	i2c_register_board_info(3, tuna_i2c3_boardinfo_final,
-		ARRAY_SIZE(tuna_i2c3_boardinfo_final));
+	i2c_register_board_info(3, tuna_i2c4_boardinfo_final,
+		ARRAY_SIZE(tuna_i2c4_boardinfo_final));
 
 	omap_mux_init_gpio(8, OMAP_PIN_INPUT);
 	omap_mux_init_gpio(30, OMAP_PIN_INPUT);
